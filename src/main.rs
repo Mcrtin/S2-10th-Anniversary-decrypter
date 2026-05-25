@@ -28,11 +28,12 @@ fn main() -> Result<()> {
                         ".dng" => Game::Dng,
                         _ => return Ok(()),
                     };
+                    let content = std::fs::read(&path)?;
                     path.set_file_name(
                         file_stem[..file_stem.len() - 3].to_owned()
                             + path.extension().unwrap().to_str().unwrap(),
                     );
-                    write_encrypted(&path, game, std::fs::read(&path)?)
+                    write_encrypted(&path, game, content)
                 }
                 Err(e) => Err(e),
             }

@@ -16,6 +16,7 @@ fn main() -> Result<()> {
                     let ext = match decomp.game {
                         Game::Adk => "adk.".to_owned(),
                         Game::Dng => "dng.".to_owned(),
+                        Game::AdkDemo => "adkdemo.".to_owned(),
                     };
                     path.set_extension(ext + path.extension().unwrap().to_str().unwrap());
                     std::fs::write(&path, decomp.data)?;
@@ -26,13 +27,15 @@ fn main() -> Result<()> {
                     let game = match &file_stem[file_stem.len() - 4..] {
                         ".adk" => Game::Adk,
                         ".dng" => Game::Dng,
+                        ".adkdemo" => Game::AdkDemo,
                         _ => return Ok(()),
                     };
+                    let data = std::fs::read(&path)?;
                     path.set_file_name(
                         file_stem[..file_stem.len() - 3].to_owned()
                             + path.extension().unwrap().to_str().unwrap(),
                     );
-                    write_encrypted(&path, game, std::fs::read(&path)?)
+                    write_encrypted(&path, game, data)
                 }
                 Err(e) => Err(e),
             }

@@ -12,6 +12,7 @@ use simple_eyre::eyre::{Result, eyre};
 pub enum Game {
     Dng = u32::from_le_bytes(*b"rc00"),
     Adk = u32::from_le_bytes(*b"sadk"),
+    AdkDemo = u32::from_le_bytes(*b"demo"),
 }
 
 #[binrw]
@@ -42,12 +43,14 @@ fn rng(seed: u32) -> minstd::MINSTD0 {
 fn make_key(file: &str, game: &Game) -> [u8; 16] {
     let key = match game {
         Game::Adk => *uuid::uuid!("bd8cc2bd-3067-4bf8-b49b-1bf9f6822ef4").as_bytes(),
+        Game::AdkDemo => *uuid::uuid!("53ae6c83-89e7-6f73-df47-d84398186113").as_bytes(),
         Game::Dng => *uuid::uuid!("c95946ca-d9f0-4f0a-a100-aab8cbe8db6b").as_bytes(),
     };
     let file = file.to_ascii_lowercase();
     let mut rng = rng(hash(&encoding_rs::WINDOWS_1252.encode(&file).0));
     match &file[file.len() - 4..] {
         ".s2m" | ".sav" => key,
+        _ if *game == Game::AdkDemo => key,
         _ => key.map(|byte| byte ^ rng.next() as u8),
     }
 }
@@ -161,4 +164,12 @@ pub fn write_encrypted<P: AsRef<Path>>(path: P, game: Game, data: Vec<u8>) -> Re
     DecompressedFile { game, data }.write_args(&mut cursor, (file_name,))?;
     std::fs::write(path, cursor.into_inner())?;
     Ok(())
+}
+
+#[test]
+fn test_encrypt() {
+    panic!(
+        "{:#?}",
+        encrypt_decrypt([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], &[0]).collect::<Vec<_>>()
+    );
 }
